@@ -14,6 +14,13 @@ def parse_args():
     args.add_argument(
         '-v', '--version', action='version', version='cuesplit-1.0.1-pre')
     args.add_argument(
+        '-g',
+        action='store',
+        dest='gaps',
+        default='append',
+        choices=('append', 'prepend', 'split'),
+        help='control gaps')
+    args.add_argument(
         'filename', action='store', help='the converted file name')
     return args.parse_args()
 
@@ -159,6 +166,29 @@ async def check_cue(cue):
             raise ValueError(f'bad index for track {num}')
 
 
+async def check_point(index):
+    if index:
+        parts = index.split(':')
+        return f'{int(parts[0])}:{parts[1]}.{parts[2]}'
+
+
+async def sift_points(cue, schema, points):
+    for track in cue['tracks']:
+        if schema == 'append' and track['num'] != '01':
+            point = await check_point(track['index1'])
+            points.append(point)
+        elif schema == 'prepend':
+            if track['index0'] and track['num'] != '01':
+                points.append(await check_point(track['index0']))
+            elif not track['index0'] and track['num'] != '01':
+                points.append(await check_point(track['index1']))
+        elif schema == 'split':
+            if track['index0']:
+                points.append(await check_point(track['index0']))
+            if track['index1']:
+                points.append(await check_point(track['index1']))
+
+
 async def main(arguments):
     data = dict()
     await make_couple(arguments.filename, data)
@@ -167,6 +197,9 @@ async def main(arguments):
         await extract_metadata(cue, data)
     await check_cue(data)
     print(json.dumps(data, indent=2, ensure_ascii=False))
+    points = list()
+    await sift_points(data, arguments.gaps, points)
+    print(json.dumps(points, indent=2))
 
 
 if __name__ == '__main__':
