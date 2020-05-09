@@ -77,11 +77,13 @@ async def read_file(name):
         return None
 
 
-async def get_value(content, expression):
+async def get_value(content, expression, index=False):
     pattern = re.compile(expression)
     for line in content:
         box = pattern.match(line)
         if box:
+            if index:
+                return box.group(1)
             return box.group(1).strip('"')
 
 
@@ -102,27 +104,22 @@ async def get_tracks(content):
     return res
 
 
-async def get_tracks_meta(content, tracks):
+async def get_tracks_meta(content, tracks, performer):
+    title = r'^ +TITLE +(.+)'
+    perf = r'^ +PERFORMER +(.+)'
+    index0 = r'^ +INDEX 00 +(\d{2}:\d{2}:\d{2})'
+    index1 = r'^ +INDEX 01 +(\d{2}:\d{2}:\d{2})'
     for i in range(len(tracks)):
-        title = re.compile(r'^ +TITLE +(.+)')
-        perf = re.compile(r'^ +PERFORMER +(.+)')
-        index0 = re.compile(r'^ +INDEX 00 +(\d{2}:\d{2}:\d{2})')
-        index1 = re.compile(r'^ +INDEX 01 +(\d{2}:\d{2}:\d{2})')
         first = tracks[i].get('this')
         second = tracks[i].get('next')
-        for line in content[first:second]:
-            box = title.match(line)
-            if box:
-                tracks[i]['title'] = box.group(1).strip('"')
-            box = perf.match(line)
-            if box:
-                tracks[i]['performer'] = box.group(1).strip('"')
-            box = index0.match(line)
-            if box:
-                tracks[i]['index0'] = box.group(1)
-            box = index1.match(line)
-            if box:
-                tracks[i]['index1'] = box.group(1)
+        tracks[i]['title'] = await get_value(content[first:second], title)
+        tracks[i]['performer'] = await get_value(content[first:second], perf)
+        if tracks[i].get('performer') is None:
+            tracks[i]['performer'] = performer
+        tracks[i]['index0'] = await get_value(
+            content[first:second], index0, index=True)
+        tracks[i]['index1'] = await get_value(
+            content[first:second], index1, index=True)
         if first:
             del tracks[i]['this']
         if second:
@@ -141,7 +138,25 @@ async def extract_metadata(filename, res):
     res['comment'] = await get_value(content, r'^REM COMMENT +(.+)')
     res['tracks'] = await get_tracks(content)
     if res['tracks']:
-        await get_tracks_meta(content, res['tracks'])
+        await get_tracks_meta(content, res['tracks'], res['album performer'])
+
+
+async def check_cue(cue):
+    summary = [bool(cue.get('album')),
+               bool(cue.get('album performer')),
+               bool(cue.get('tracks'))]
+    if summary and not all(summary):
+        raise ValueError('this cuesheet is not valid')
+    if cue['tracks'][0].get('index0') == '00:00:00':
+        cue['tracks'][0]['index0'] = None
+    if cue['tracks'][0].get('index1') == '00:00:00':
+        cue['tracks'][0]['index1'] = None
+    for track in cue.get('tracks', list()):
+        num = track.get('num')
+        if track.get('title') is None:
+            raise ValueError(f'bad title for track {num}')
+        if track['num'] != '01' and track['index1'] is None:
+            raise ValueError(f'bad index for track {num}')
 
 
 async def main(arguments):
@@ -150,6 +165,7 @@ async def main(arguments):
     cue, media = data.get('cue'), data.get('media')
     if cue and media:
         await extract_metadata(cue, data)
+    await check_cue(data)
     print(json.dumps(data, indent=2, ensure_ascii=False))
 
 
