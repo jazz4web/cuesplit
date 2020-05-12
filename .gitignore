@@ -1,4 +1,6 @@
 __pycache__/
+exec.py
+current.py
 .idea/
 *.pyc
 *.cue
