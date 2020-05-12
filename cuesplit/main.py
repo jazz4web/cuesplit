@@ -6,7 +6,9 @@ import sys
 
 from .checker import check_cue
 from .parser import make_couple, extract_metadata
-from .splitter import detect_gaps, remove_gaps, sift_points, split_cue
+from .splitter import (
+    detect_gaps, encode_tracks, filter_tracks,
+    remove_gaps, sift_points, split_cue)
 
 
 def parse_args(version):
@@ -19,7 +21,14 @@ def parse_args(version):
         dest='gaps',
         default='append',
         choices=('append', 'prepend', 'split'),
-        help='control gaps')
+        help='control gaps, default is append')
+    args.add_argument(
+        '-m',
+        action='store',
+        dest='media_type',
+        default='flac',
+        choices=('flac',),
+        help='the output media type, default is flac')
     args.add_argument(
         'filename', action='store', help='the converted file name')
     return args.parse_args()
@@ -46,9 +55,15 @@ async def start_the_process(arguments):
     # print(json.dumps(metadata, indent=2, ensure_ascii=False))
     junk = await detect_gaps(metadata, arguments.gaps, template)
     # print(json.dumps(junk, indent=2))
-    first = asyncio.create_task(
+    progress = {'tracks': list(),
+                'label': None}
+    split = asyncio.create_task(
         split_cue(await sift_points(metadata, arguments.gaps),
                   metadata['media'], template))
-    second = asyncio.create_task(remove_gaps(junk, first))
-    await first
-    await second
+    gaps = asyncio.create_task(remove_gaps(junk, split))
+    tracks = asyncio.create_task(filter_tracks(template, progress, junk, split))
+    enc = asyncio.create_task(encode_tracks(progress, split))
+    await split
+    await gaps
+    await tracks
+    await enc

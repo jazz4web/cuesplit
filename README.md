@@ -11,4 +11,4 @@ for debugging this tool. *cuesplit* depends on:
 
 These dependencies must be installed.
 
-Right now, *cusplit* is not ready yet.
+Right now, *cuesplit* is not ready yet.

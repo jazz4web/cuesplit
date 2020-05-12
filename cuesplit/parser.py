@@ -67,6 +67,7 @@ async def get_tracks(content):
                 res[i - 1]['next'] = step
             res.append(track)
             i += 1
+    print(f'there are {len(res)} tracks')
     return res
 
 
