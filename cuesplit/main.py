@@ -6,9 +6,8 @@ import sys
 
 from .checker import check_cue
 from .parser import make_couple, extract_metadata
-from .splitter import (
-    detect_gaps, encode_tracks, filter_tracks,
-    remove_gaps, sift_points, split_cue)
+from .encoder import encode_tracks, filter_tracks
+from .splitter import detect_gaps, remove_gaps, sift_points, split_cue
 
 
 def parse_args(version):

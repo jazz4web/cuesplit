@@ -1,7 +1,6 @@
+import importlib.util
 import re
 import os
-
-from chardet import detect
 
 from .system import detect_f_type
 
@@ -31,6 +30,9 @@ async def make_couple(filename, res):
 
 
 async def read_file(name):
+    if importlib.util.find_spec('chardet') is None:
+        raise OSError('python3 module chardet is not installed')
+    from chardet import detect
     t = await detect_f_type(name)
     if t != 'text/plain':
         raise ValueError('bad cue')
