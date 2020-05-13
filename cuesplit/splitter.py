@@ -69,7 +69,7 @@ async def split_cue(points, filename, template):
     await p.communicate(points)
     await p.wait()
     if p.returncode == 0:
-        print(f'{os.path.basename(filename)}, done')
+        print(f'{os.path.basename(filename)} got split, wait for encoding...')
 
 
 async def remove_gaps(junk, main_task):

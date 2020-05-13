@@ -1,6 +1,36 @@
 import asyncio
 import glob
 import os
+import re
+
+from .system import check_dep
+
+
+async def get_flac(metadata, num, filename):
+    e = r'[\\/|?<>*:]'
+    new = '{0} - {1} - {2}.flac'.format(
+        metadata['tracks'][num]['num'],
+        re.sub(e, '~', metadata['tracks'][num]['performer']),
+        re.sub(e, '~', metadata['tracks'][num]['title']))
+    cmd = 'flac -8 -f -o "{0}" {1} {2} {3} {4} {5} {6} {7} {8}'.format(
+        new,
+        f'--tag=artist=\"{metadata["tracks"][num]["performer"]}\"',
+        f'--tag=album=\"{metadata["album"]}\"',
+        f'--tag=genre=\"{metadata["genre"]}\"',
+        f'--tag=title=\"{metadata["tracks"][num]["title"]}\"',
+        f'--tag=tracknumber={int(metadata["tracks"][num]["num"])}',
+        f'--tag=date=\"{metadata["date"]}\"',
+        f'--tag=comment=\"{metadata["commentary"]}\"',
+        filename)
+    return new, cmd
+
+
+async def set_cmd(metadata, media, num, filename):
+    if media == 'flac':
+        if os.path.splitext(metadata.get('media'))[1] != '.flac':
+            if not await check_dep('flac'):
+                raise OSError('flack is not installed')
+        return await get_flac(metadata, num, filename)
 
 
 async def filter_tracks(template, res, junk, main_task):
@@ -16,15 +46,18 @@ async def filter_tracks(template, res, junk, main_task):
     res['tracks'].append(files[0])
 
 
-async def encode_tracks(res, main_task):
+async def encode_tracks(metadata, res, main_task, media):
+    i = 0
     while not main_task.done() or res['tracks']:
         while res['label'] is None:
             await asyncio.sleep(0.1)
+        new, cmd = await(set_cmd(metadata, media, i, res["tracks"][0]))
         p = await asyncio.create_subprocess_shell(
-            f'flac -8 -f {res["tracks"][0]}',
+            cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
         await p.wait()
         os.remove(res["tracks"][0])
         current = res["tracks"].pop(0)
-        print(f'{current} done')
+        print(f'{current} -> {new}')
+        i += 1

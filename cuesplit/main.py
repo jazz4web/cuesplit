@@ -1,6 +1,6 @@
 import argparse
 import asyncio
-# import json
+import json
 import os
 import sys
 
@@ -61,7 +61,8 @@ async def start_the_process(arguments):
                   metadata['media'], template))
     gaps = asyncio.create_task(remove_gaps(junk, split))
     tracks = asyncio.create_task(filter_tracks(template, progress, junk, split))
-    enc = asyncio.create_task(encode_tracks(progress, split))
+    enc = asyncio.create_task(
+        encode_tracks(metadata, progress, split, arguments.media_type))
     await split
     await gaps
     await tracks
