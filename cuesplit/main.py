@@ -5,7 +5,7 @@ import os
 import sys
 
 from .checker import check_cue
-from .parser import make_couple, extract_metadata
+from .parser import check_picture, extract_metadata, make_couple
 from .encoder import encode_tracks, filter_tracks
 from .splitter import detect_gaps, remove_gaps, sift_points, split_cue
 
@@ -29,6 +29,11 @@ def parse_args(version):
         choices=('flac',),
         help='the output media type, default is flac')
     args.add_argument(
+        '-p',
+        action='store',
+        dest='picture',
+        help='add cover front picture to tracks')
+    args.add_argument(
         'filename', action='store', help='the converted file name')
     return args.parse_args()
 
@@ -46,6 +51,8 @@ def show_error(msg, code=1):
 async def start_the_process(arguments):
     metadata = dict()
     template = 'track'
+    if arguments.picture:
+        await check_picture(arguments.picture, metadata)
     await make_couple(arguments.filename, metadata)
     cue, media = metadata.get('cue'), metadata.get('media')
     if cue and media:

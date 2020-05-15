@@ -13,7 +13,10 @@ async def get_flac(metadata, num, filename):
         metadata['tracks'][num]['num'],
         re.sub(e, '~', metadata['tracks'][num]['performer']),
         re.sub(e, '~', metadata['tracks'][num]['title']))
-    cmd = 'flac -8 -f -o "{0}"{1}{2}{3}{4}{5}{6}{7} {8}'.format(
+    pic = None
+    if 'cover front' in metadata:
+        pic = f' --picture=\"3||front cover||{metadata["cover front"]}\"'
+    cmd = 'flac -8 -f -o "{0}"{1}{2}{3}{4}{5}{6}{7}{8} {9}'.format(
         new,
         f' --tag=artist=\"{metadata["tracks"][num]["performer"]}\"',
         f' --tag=album=\"{metadata["album"]}\"',
@@ -22,6 +25,7 @@ async def get_flac(metadata, num, filename):
         f' --tag=tracknumber={int(metadata["tracks"][num]["num"])}',
         f' --tag=date=\"{metadata["date"]}\"',
         f' --tag=comment=\"{metadata["commentary"] or version}\"',
+        pic,
         filename)
     return new, cmd
 

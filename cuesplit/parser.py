@@ -5,6 +5,15 @@ import os
 from .system import detect_f_type
 
 
+async def check_picture(filename, res):
+    if os.path.splitext(filename)[1] in ('.jpeg', '.jpg', '.png') and \
+            os.path.exists(filename):
+        res['cover front'] = os.path.realpath(filename)
+    else:
+        print('{0} does not exist or is incompatible, ignored'.format(
+            os.path.basename(filename)))
+
+
 async def make_couple(filename, res):
     medias = ('.wav', '.flac', '.ape')
     cues = ('.cue', '.cue~')
