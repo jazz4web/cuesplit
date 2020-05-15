@@ -12,3 +12,6 @@ current.py
 *.ogg
 *.wv
 *.opus
+*.jpg
+*.jpeg
+*.png

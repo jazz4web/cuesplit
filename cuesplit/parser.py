@@ -6,7 +6,7 @@ from .system import detect_f_type
 
 
 async def make_couple(filename, res):
-    medias = ('.wav', '.flac')
+    medias = ('.wav', '.flac', '.ape')
     cues = ('.cue', '.cue~')
     if not os.path.exists(filename):
         raise FileNotFoundError(f'"{filename}" does not exist')
