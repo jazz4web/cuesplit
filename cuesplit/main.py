@@ -26,7 +26,7 @@ def parse_args(version):
         action='store',
         dest='media_type',
         default='flac',
-        choices=('flac',),
+        choices=('flac','opus'),
         help='the output media type, default is flac')
     args.add_argument(
         '-p',

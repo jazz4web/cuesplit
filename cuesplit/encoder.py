@@ -7,12 +7,17 @@ from .system import check_dep
 from . import version
 
 
-async def get_flac(metadata, num, filename):
+async def set_track_name(metadata, num, ext):
     e = r'[\\/|?<>*:]'
-    new = '{0} - {1} - {2}.flac'.format(
+    return '{0} - {1} - {2}{3}'.format(
         metadata['tracks'][num]['num'],
         re.sub(e, '~', metadata['tracks'][num]['performer']),
-        re.sub(e, '~', metadata['tracks'][num]['title']))
+        re.sub(e, '~', metadata['tracks'][num]['title']),
+        ext)
+
+
+async def get_flac(metadata, num, filename):
+    new = await set_track_name(metadata, num, '.flac')
     pic = None
     if 'cover front' in metadata:
         pic = f' --picture=\"3||front cover||{metadata["cover front"]}\"'
@@ -30,12 +35,35 @@ async def get_flac(metadata, num, filename):
     return new, cmd
 
 
+async def get_opus(metadata, num, filename):
+    new = await set_track_name(metadata, num, '.opus')
+    pic = None
+    if 'cover front' in metadata:
+        pic = f' --picture \"3||front cover||{metadata["cover front"]}\"'
+    cmd = 'opusenc {0}{1}{2}{3}{4}{5}{6}{7} {8} \"{9}\"'.format(
+        f' --artist \"{metadata["tracks"][num]["performer"]}\"',
+        f' --album \"{metadata["album"]}\"',
+        f' --genre \"{metadata["genre"]}\"',
+        f' --title \"{metadata["tracks"][num]["title"]}\"',
+        f' --comment tracknumber=\"{int(metadata["tracks"][num]["num"])}\"',
+        f' --date \"{metadata["date"]}\"',
+        f' --comment comment=\"{metadata["commentary"] or version}\"',
+        pic,
+        filename,
+        new)
+    return new, cmd
+
+
 async def set_cmd(metadata, media, num, filename):
     if media == 'flac':
         if os.path.splitext(metadata.get('media'))[1] != '.flac':
             if not await check_dep('flac'):
                 raise OSError('flack is not installed')
         return await get_flac(metadata, num, filename)
+    elif media == 'opus':
+        if not await check_dep('opusenc'):
+            raise OSError('opus-tools is not installed')
+        return await get_opus(metadata, num, filename)
 
 
 async def filter_tracks(template, res, junk, main_task):
