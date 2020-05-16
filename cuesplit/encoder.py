@@ -45,7 +45,7 @@ async def get_opus(metadata, num, filename):
         f' --album \"{metadata["album"]}\"',
         f' --genre \"{metadata["genre"]}\"',
         f' --title \"{metadata["tracks"][num]["title"]}\"',
-        f' --comment tracknumber=\"{int(metadata["tracks"][num]["num"])}\"',
+        f' --comment tracknumber={int(metadata["tracks"][num]["num"])}',
         f' --date \"{metadata["date"]}\"',
         f' --comment comment=\"{metadata["commentary"] or version}\"',
         pic,
