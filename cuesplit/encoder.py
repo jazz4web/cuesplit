@@ -3,7 +3,6 @@ import glob
 import os
 import re
 
-from .system import check_dep
 from . import version
 
 
@@ -21,13 +20,14 @@ async def get_flac(metadata, num, filename):
     pic = None
     if 'cover front' in metadata:
         pic = f' --picture=\"3||front cover||{metadata["cover front"]}\"'
+    t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
     cmd = 'flac -8 -f -o "{0}"{1}{2}{3}{4}{5}{6}{7}{8} {9}'.format(
         new,
         f' --tag=artist=\"{metadata["tracks"][num]["performer"]}\"',
         f' --tag=album=\"{metadata["album"]}\"',
         f' --tag=genre=\"{metadata["genre"]}\"',
         f' --tag=title=\"{metadata["tracks"][num]["title"]}\"',
-        f' --tag=tracknumber={int(metadata["tracks"][num]["num"])}',
+        f' --tag=tracknumber=\"{t}\"',
         f' --tag=date=\"{metadata["date"]}\"',
         f' --tag=comment=\"{metadata["commentary"] or version}\"',
         pic,
@@ -40,12 +40,13 @@ async def get_opus(metadata, num, filename):
     pic = None
     if 'cover front' in metadata:
         pic = f' --picture \"3||front cover||{metadata["cover front"]}\"'
+    t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
     cmd = 'opusenc {0}{1}{2}{3}{4}{5}{6}{7} {8} \"{9}\"'.format(
         f' --artist \"{metadata["tracks"][num]["performer"]}\"',
         f' --album \"{metadata["album"]}\"',
         f' --genre \"{metadata["genre"]}\"',
         f' --title \"{metadata["tracks"][num]["title"]}\"',
-        f' --comment tracknumber={int(metadata["tracks"][num]["num"])}',
+        f' --comment tracknumber=\"{t}\"',
         f' --date \"{metadata["date"]}\"',
         f' --comment comment=\"{metadata["commentary"] or version}\"',
         pic,
@@ -56,13 +57,8 @@ async def get_opus(metadata, num, filename):
 
 async def set_cmd(metadata, media, num, filename):
     if media == 'flac':
-        if os.path.splitext(metadata.get('media'))[1] != '.flac':
-            if not await check_dep('flac'):
-                raise OSError('flack is not installed')
         return await get_flac(metadata, num, filename)
     elif media == 'opus':
-        if not await check_dep('opusenc'):
-            raise OSError('opus-tools is not installed')
         return await get_opus(metadata, num, filename)
 
 
