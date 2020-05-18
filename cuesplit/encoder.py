@@ -35,6 +35,29 @@ async def get_flac(metadata, num, filename):
     return new, cmd
 
 
+async def get_mp3(metadata, num, filename):
+    new = await set_track_name(metadata, num, '.mp3')
+    pic = None
+    if 'cover front' in metadata:
+        pic = f' --ti \"{metadata["cover front"]}\"'
+    t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
+    o = '-b 320 --lowpass -1 --noreplaygain'
+    cmd = 'lame {0}{1}{2}{3}{4}{5}{6}{7}{8}{9} {10} \"{11}\"'.format(
+        o,
+        ' --id3v2-only --id3v2-utf16',
+        f' --ta \"{metadata["tracks"][num]["performer"]}\"',
+        f' --tl \"{metadata["album"]}\"',
+        f' --tg \"{metadata["genre"]}\"',
+        f' --tt \"{metadata["tracks"][num]["title"]}\"',
+        f' --tn \"{t}\"',
+        f' --ty \"{metadata["date"]}\"',
+        f' --tv \"COMM=={metadata["commentary"] or version}\"',
+        pic,
+        filename,
+        new)
+    return new, cmd
+
+
 async def get_opus(metadata, num, filename):
     new = await set_track_name(metadata, num, '.opus')
     pic = None
@@ -78,6 +101,8 @@ async def set_cmd(metadata, media, num, filename):
         return await get_opus(metadata, num, filename)
     elif media == 'vorbis':
         return await get_vorbis(metadata, num, filename)
+    elif media == 'mp3':
+        return await get_mp3(metadata, num, filename)
 
 
 async def filter_tracks(template, res, junk, main_task):
