@@ -55,11 +55,29 @@ async def get_opus(metadata, num, filename):
     return new, cmd
 
 
+async def get_vorbis(metadata, num, filename):
+    new = await set_track_name(metadata, num, '.ogg')
+    t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
+    cmd = 'oggenc -q 4 {0}{1}{2}{3}{4}{5}{6} -o \"{7}\" {8}'.format(
+        f' --artist \"{metadata["tracks"][num]["performer"]}\"',
+        f' --album \"{metadata["album"]}\"',
+        f' --genre \"{metadata["genre"]}\"',
+        f' --title \"{metadata["tracks"][num]["title"]}\"',
+        f' --comment tracknumber=\"{t}\"',
+        f' --date \"{metadata["date"]}\"',
+        f' --comment comment=\"{metadata["commentary"] or version}\"',
+        new,
+        filename)
+    return new, cmd
+
+
 async def set_cmd(metadata, media, num, filename):
     if media == 'flac':
         return await get_flac(metadata, num, filename)
     elif media == 'opus':
         return await get_opus(metadata, num, filename)
+    elif media == 'vorbis':
+        return await get_vorbis(metadata, num, filename)
 
 
 async def filter_tracks(template, res, junk, main_task):

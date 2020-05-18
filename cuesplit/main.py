@@ -27,13 +27,13 @@ def parse_args(version):
         action='store',
         dest='media_type',
         default='flac',
-        choices=('flac','opus'),
+        choices=('flac', 'opus', 'vorbis'),
         help='the output media type, default is flac')
     args.add_argument(
         '-p',
         action='store',
         dest='picture',
-        help='add cover front picture to tracks')
+        help='add cover front picture to tracks, only with flac and opus')
     args.add_argument(
         'filename', action='store', help='the converted file name')
     return args.parse_args()
@@ -65,6 +65,11 @@ async def start_the_process(arguments):
     if arguments.media_type == 'opus':
         if not await check_dep('opusenc'):
             raise OSError('opus-tools is not installed')
+    if arguments.media_type == 'vorbis':
+        if not await check_dep('oggenc'):
+            raise OSError('vorbis-tools is not installed')
+        if arguments.picture:
+            print('picture is not an option with vorbis tracks, ignored')
     # print(json.dumps(metadata, indent=2, ensure_ascii=False))
     junk = await detect_gaps(metadata, arguments.gaps, template)
     # print(json.dumps(junk, indent=2))
