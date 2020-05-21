@@ -4,7 +4,7 @@ import asyncio
 import os
 import sys
 
-from .checker import check_cue
+from .checker import check_cue, check_couple
 from .parser import check_picture, extract_metadata, make_couple
 from .encoder import encode_tracks, filter_tracks
 from .splitter import detect_gaps, remove_gaps, sift_points, split_cue
@@ -56,23 +56,27 @@ async def start_the_process(arguments):
         await check_picture(arguments.picture, metadata)
     await make_couple(arguments.filename, metadata)
     cue, media = metadata.get('cue'), metadata.get('media')
-    if cue and media:
-        await extract_metadata(cue, metadata)
+    if not await check_dep('shntool'):
+        raise OSError('shntool is not installed')
+    await extract_metadata(cue, metadata)
     await check_cue(metadata)
+    await check_couple(metadata)
     if arguments.media_type == 'flac' or os.path.splitext(media)[1] == '.flac':
         if not await check_dep('flac'):
             raise OSError('flack is not installed')
     if arguments.media_type == 'opus':
         if not await check_dep('opusenc'):
             raise OSError('opus-tools is not installed')
-    if arguments.media_type == 'vorbis':
+    elif arguments.media_type == 'vorbis':
         if not await check_dep('oggenc'):
             raise OSError('vorbis-tools is not installed')
         if arguments.picture:
             print('picture is not an option with vorbis tracks, ignored')
+    elif arguments.media_type == 'mp3':
+        if not await check_dep('lame'):
+            raise OSError('lame is not installed')
     # print(json.dumps(metadata, indent=2, ensure_ascii=False))
     junk = await detect_gaps(metadata, arguments.gaps, template)
-    # print(json.dumps(junk, indent=2))
     current = list()
     split = asyncio.create_task(
         split_cue(await sift_points(metadata, arguments.gaps),

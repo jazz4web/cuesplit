@@ -29,6 +29,8 @@ async def make_couple(filename, res):
                 res['media'] = m
                 res['cue'] = source
                 break
+        else:
+            raise FileNotFoundError('cannot find an appropriate media file')
     elif ext in medias:
         for each in cues:
             c = os.path.join(hd, name + each)
@@ -36,6 +38,8 @@ async def make_couple(filename, res):
                 res['cue'] = c
                 res['media'] = source
                 break
+        else:
+            raise FileNotFoundError('cannot find an appropriate cue file')
 
 
 async def read_file(name):
