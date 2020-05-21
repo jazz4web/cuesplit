@@ -19,6 +19,6 @@ async def detect_f_type(name):
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE)
     stdout, stderr = await p.communicate()
-    if stderr:
+    if p.returncode:
         raise RuntimeError('something bad happened')
     return stdout.decode('utf-8').strip()

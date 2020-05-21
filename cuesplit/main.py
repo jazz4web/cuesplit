@@ -7,6 +7,7 @@ import sys
 from .checker import check_cue, check_couple
 from .parser import check_picture, extract_metadata, make_couple
 from .encoder import encode_tracks, filter_tracks
+from .options import check_options
 from .splitter import detect_gaps, remove_gaps, sift_points, split_cue
 from .system import check_dep
 
@@ -19,7 +20,7 @@ def parse_args(version):
         '-g',
         action='store',
         dest='gaps',
-        default='append',
+        default='split',
         choices=('append', 'prepend', 'split'),
         help='control gaps, default is append')
     args.add_argument(
@@ -34,6 +35,11 @@ def parse_args(version):
         action='store',
         dest='picture',
         help='add cover front picture to tracks, only with flac and opus')
+    args.add_argument(
+        '-o',
+        action='store',
+        dest='enc_opts',
+        help='control some options while encoding tracks')
     args.add_argument(
         'filename', action='store', help='the converted file name')
     return args.parse_args()
@@ -50,8 +56,8 @@ def show_error(msg, code=1):
 
 
 async def start_the_process(arguments):
-    metadata = dict()
-    template = 'track'
+    opts = await check_options(arguments.media_type, arguments.enc_opts)
+    template, current, metadata, = 'track', list(), dict()
     if arguments.picture:
         await check_picture(arguments.picture, metadata)
     await make_couple(arguments.filename, metadata)
@@ -77,14 +83,13 @@ async def start_the_process(arguments):
             raise OSError('lame is not installed')
     # print(json.dumps(metadata, indent=2, ensure_ascii=False))
     junk = await detect_gaps(metadata, arguments.gaps, template)
-    current = list()
     split = asyncio.create_task(
         split_cue(await sift_points(metadata, arguments.gaps),
                   metadata['media'], template))
     gaps = asyncio.create_task(remove_gaps(junk, split))
     tracks = asyncio.create_task(filter_tracks(template, current, junk, split))
     enc = asyncio.create_task(
-        encode_tracks(metadata, current, tracks, arguments.media_type))
+        encode_tracks(metadata, current, tracks, arguments.media_type, opts))
     await split
     await gaps
     await tracks

@@ -15,13 +15,14 @@ async def set_track_name(metadata, num, ext):
         ext)
 
 
-async def get_flac(metadata, num, filename):
+async def get_flac(metadata, num, filename, opts):
     new = await set_track_name(metadata, num, '.flac')
     pic = None
     if 'cover front' in metadata:
         pic = f' --picture=\"3||front cover||{metadata["cover front"]}\"'
     t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
-    cmd = 'flac -8 -f -o "{0}"{1}{2}{3}{4}{5}{6}{7}{8} {9}'.format(
+    cmd = 'flac {0} -f -o "{1}"{2}{3}{4}{5}{6}{7}{8}{9} {10}'.format(
+        opts or '-8',
         new,
         f' --tag=artist=\"{metadata["tracks"][num]["performer"]}\"',
         f' --tag=album=\"{metadata["album"]}\"',
@@ -30,12 +31,12 @@ async def get_flac(metadata, num, filename):
         f' --tag=tracknumber=\"{t}\"',
         f' --tag=date=\"{metadata["date"]}\"',
         f' --tag=comment=\"{metadata["commentary"] or version}\"',
-        pic,
+        pic or '',
         filename)
     return new, cmd
 
 
-async def get_mp3(metadata, num, filename):
+async def get_mp3(metadata, num, filename, opts):
     new = await set_track_name(metadata, num, '.mp3')
     pic = None
     if 'cover front' in metadata:
@@ -52,19 +53,20 @@ async def get_mp3(metadata, num, filename):
         f' --tn \"{t}\"',
         f' --ty \"{metadata["date"]}\"',
         f' --tv \"COMM=={metadata["commentary"] or version}\"',
-        pic,
+        pic or '',
         filename,
         new)
     return new, cmd
 
 
-async def get_opus(metadata, num, filename):
+async def get_opus(metadata, num, filename, opts):
     new = await set_track_name(metadata, num, '.opus')
     pic = None
     if 'cover front' in metadata:
         pic = f' --picture \"3||front cover||{metadata["cover front"]}\"'
     t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
-    cmd = 'opusenc {0}{1}{2}{3}{4}{5}{6}{7} {8} \"{9}\"'.format(
+    cmd = 'opusenc {0}{1}{2}{3}{4}{5}{6}{7}{8} {9} \"{10}\"'.format(
+        opts or '',
         f' --artist \"{metadata["tracks"][num]["performer"]}\"',
         f' --album \"{metadata["album"]}\"',
         f' --genre \"{metadata["genre"]}\"',
@@ -72,13 +74,13 @@ async def get_opus(metadata, num, filename):
         f' --comment tracknumber=\"{t}\"',
         f' --date \"{metadata["date"]}\"',
         f' --comment comment=\"{metadata["commentary"] or version}\"',
-        pic,
+        pic or '',
         filename,
         new)
     return new, cmd
 
 
-async def get_vorbis(metadata, num, filename):
+async def get_vorbis(metadata, num, filename, opts):
     new = await set_track_name(metadata, num, '.ogg')
     t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
     cmd = 'oggenc -q 4 {0}{1}{2}{3}{4}{5}{6} -o \"{7}\" {8}'.format(
@@ -94,15 +96,15 @@ async def get_vorbis(metadata, num, filename):
     return new, cmd
 
 
-async def set_cmd(metadata, media, num, filename):
+async def set_cmd(metadata, media, num, filename, opts):
     if media == 'flac':
-        return await get_flac(metadata, num, filename)
+        return await get_flac(metadata, num, filename, opts)
     elif media == 'opus':
-        return await get_opus(metadata, num, filename)
+        return await get_opus(metadata, num, filename, opts)
     elif media == 'vorbis':
-        return await get_vorbis(metadata, num, filename)
+        return await get_vorbis(metadata, num, filename, opts)
     elif media == 'mp3':
-        return await get_mp3(metadata, num, filename)
+        return await get_mp3(metadata, num, filename, opts)
 
 
 async def filter_tracks(template, res, junk, main_task):
@@ -116,13 +118,14 @@ async def filter_tracks(template, res, junk, main_task):
     res.append(files[0])
 
 
-async def encode_tracks(metadata, res, main_task, media):
+async def encode_tracks(metadata, res, main_task, media, opts):
     i = 0
     while not main_task.done() or res:
         if not len(res):
             await asyncio.sleep(0.1)
             continue
-        new, cmd = await(set_cmd(metadata, media, i, res[0]))
+        new, cmd = await set_cmd(metadata, media, i, res[0], opts)
+        # print(cmd)
         p = await asyncio.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,

@@ -20,7 +20,7 @@ async def check_cue(cue):
             raise ValueError(f'bad title for track {num}')
         if track['num'] != '01' and track['index1'] is None:
             raise ValueError(f'bad index for track {num}')
-    slash = '/' if cue.get('comment') and cue.get('disc ID') else None
+    slash = '/' if cue.get('comment') and cue.get('disc ID') else ''
     cue['commentary'] = f'{cue.get("comment")}{slash}{cue.get("disc ID")}'
 
 
