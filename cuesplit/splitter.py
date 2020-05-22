@@ -2,8 +2,6 @@ import glob
 import os
 import asyncio
 
-from .system import check_dep
-
 
 async def detect_gaps(cue, schema, template):
     junk = list()
