@@ -55,9 +55,6 @@ async def clean_cwd(template):
 
 
 async def split_cue(points, filename, template):
-    if os.path.splitext(os.path.basename(filename))[1] == '.flac':
-        if not await check_dep('flac'):
-            raise OSError('flack is not installed')
     await clean_cwd(f'{template}*.wav')
     p = await asyncio.create_subprocess_shell(
         f'shnsplit -a {template} "{filename}"',

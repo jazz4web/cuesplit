@@ -42,9 +42,8 @@ async def get_mp3(metadata, num, filename, opts):
     if 'cover front' in metadata:
         pic = f' --ti \"{metadata["cover front"]}\"'
     t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
-    o = '-b 320 --lowpass -1 --noreplaygain'
-    cmd = 'lame {0}{1}{2}{3}{4}{5}{6}{7}{8}{9} {10} \"{11}\"'.format(
-        o,
+    cmd = 'lame{0}{1}{2}{3}{4}{5}{6}{7}{8}{9} {10} \"{11}\"'.format(
+        f'{opts or " -b 320"} --lowpass -1 --noreplaygain',
         ' --id3v2-only --id3v2-utf16',
         f' --ta \"{metadata["tracks"][num]["performer"]}\"',
         f' --tl \"{metadata["album"]}\"',
@@ -65,7 +64,7 @@ async def get_opus(metadata, num, filename, opts):
     if 'cover front' in metadata:
         pic = f' --picture \"3||front cover||{metadata["cover front"]}\"'
     t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
-    cmd = 'opusenc {0}{1}{2}{3}{4}{5}{6}{7}{8} {9} \"{10}\"'.format(
+    cmd = 'opusenc{0}{1}{2}{3}{4}{5}{6}{7}{8} {9} \"{10}\"'.format(
         opts or '',
         f' --artist \"{metadata["tracks"][num]["performer"]}\"',
         f' --album \"{metadata["album"]}\"',
@@ -83,7 +82,8 @@ async def get_opus(metadata, num, filename, opts):
 async def get_vorbis(metadata, num, filename, opts):
     new = await set_track_name(metadata, num, '.ogg')
     t = f'{int(metadata["tracks"][num]["num"])}/{len(metadata["tracks"])}'
-    cmd = 'oggenc -q 4 {0}{1}{2}{3}{4}{5}{6} -o \"{7}\" {8}'.format(
+    cmd = 'oggenc {0}{1}{2}{3}{4}{5}{6}{7} -o \"{8}\" {9}'.format(
+        opts or '-q 4',
         f' --artist \"{metadata["tracks"][num]["performer"]}\"',
         f' --album \"{metadata["album"]}\"',
         f' --genre \"{metadata["genre"]}\"',
@@ -125,7 +125,6 @@ async def encode_tracks(metadata, res, main_task, media, opts):
             await asyncio.sleep(0.1)
             continue
         new, cmd = await set_cmd(metadata, media, i, res[0], opts)
-        # print(cmd)
         p = await asyncio.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,

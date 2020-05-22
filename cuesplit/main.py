@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-# import json
 import os
 import sys
 
@@ -64,12 +63,12 @@ async def start_the_process(arguments):
     cue, media = metadata.get('cue'), metadata.get('media')
     if not await check_dep('shntool'):
         raise OSError('shntool is not installed')
-    await extract_metadata(cue, metadata)
-    await check_cue(metadata)
-    await check_couple(metadata)
     if arguments.media_type == 'flac' or os.path.splitext(media)[1] == '.flac':
         if not await check_dep('flac'):
             raise OSError('flack is not installed')
+    if os.path.splitext(media)[1] == '.ape':
+        if not await check_dep('mac'):
+            raise OSError("Monkey's Audio  is not installed")
     if arguments.media_type == 'opus':
         if not await check_dep('opusenc'):
             raise OSError('opus-tools is not installed')
@@ -81,7 +80,9 @@ async def start_the_process(arguments):
     elif arguments.media_type == 'mp3':
         if not await check_dep('lame'):
             raise OSError('lame is not installed')
-    # print(json.dumps(metadata, indent=2, ensure_ascii=False))
+    await extract_metadata(cue, metadata)
+    await check_cue(metadata)
+    await check_couple(metadata)
     junk = await detect_gaps(metadata, arguments.gaps, template)
     split = asyncio.create_task(
         split_cue(await sift_points(metadata, arguments.gaps),
