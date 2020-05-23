@@ -21,7 +21,7 @@ def parse_args(version):
         dest='gaps',
         default='split',
         choices=('append', 'prepend', 'split'),
-        help='control gaps, default is append')
+        help='control gaps, default is split')
     args.add_argument(
         '-m',
         action='store',
@@ -33,7 +33,7 @@ def parse_args(version):
         '-p',
         action='store',
         dest='picture',
-        help='add cover front picture to tracks, only with flac and opus')
+        help='add cover front picture to tracks, not an option with vorbis')
     args.add_argument(
         '-o',
         action='store',
