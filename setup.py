@@ -17,7 +17,7 @@ setup(
     zip_safe=False,
     scripts=['bin/cuesplit'],
     author='AndreyVM',
-    author_email='webmaster@auriz.ru',
+    author_email='webmaster@codej.ru',
     description=DESCRIPTION,
     license='GNU GPLv3',
     keywords='cue cdda flac mp3 opus vorbis cdda-image-splitter',

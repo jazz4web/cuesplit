@@ -1,4 +1,4 @@
-*cuesplit* is a simple tool for reading cuesheet files, splitting CDD-images
+*cuesplit* is a simple tool for reading cuesheet files, splitting CDDA-images
 and filling tracks' metadata, it is free and anybody may use its code in
 accordance with GNU GPLv3.
 
@@ -67,5 +67,3 @@ Default encoder options:
 
 *cuesplit* is simple, I do not think it is needed to write some special man
 page or supplementary help right now.
-
-![cuesplit-help.png](https://auriz.ru/picture/g4cdRo5dM5.png)
